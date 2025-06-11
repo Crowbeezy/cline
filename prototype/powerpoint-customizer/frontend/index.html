@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PPTX Customizer</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+function App() {
+  const [file, setFile] = React.useState(null);
+  const [context, setContext] = React.useState('');
+  const [preview, setPreview] = React.useState([]);
+
+  const handlePreview = async () => {
+    if (!file) return;
+    const form = new FormData();
+    form.append('pptx_file', file);
+    form.append('context', context);
+    const res = await fetch('/preview', { method: 'POST', body: form });
+    const data = await res.json();
+    setPreview(data);
+  };
+
+  const handleDownload = async () => {
+    if (!file) return;
+    const form = new FormData();
+    form.append('pptx_file', file);
+    form.append('context', context);
+    const res = await fetch('/apply', { method: 'POST', body: form });
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'customized.pptx';
+    a.click();
+  };
+
+  return (
+    <div style={{padding:'20px', fontFamily:'sans-serif'}}>
+      <h2>PPTX Customizer</h2>
+      <input type="file" accept=".pptx" onChange={e => setFile(e.target.files[0])} />
+      <br/>
+      <textarea placeholder="Context" value={context} onChange={e => setContext(e.target.value)} rows="4" cols="50"></textarea>
+      <br/>
+      <button onClick={handlePreview}>Preview</button>
+      <button onClick={handleDownload}>Download</button>
+
+      <ul>
+        {preview.map((item, idx) => (
+          <li key={idx}>
+            <strong>Slide {item.slide} shape {item.shape}</strong>
+            <div>Original: {item.original}</div>
+            <div>Generated: {item.generated}</div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+ReactDOM.render(<App />, document.getElementById('root'));
+</script>
+</body>
+</html>
